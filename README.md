@@ -1,4 +1,4 @@
-# Catálogo
+# LAU Hogar y Aromas — Catálogo
 
 Catálogo online de productos, publicado en GitHub Pages.
 
