@@ -12,7 +12,7 @@ Catálogo online publicado en GitHub Pages. Los productos, precios y catálogos 
 2. Importar los tres archivos de la carpeta `plantilla/` con **Archivo → Importar → Subir → "Insertar hojas nuevas"**. Quedan las pestañas **Catalogos**, **Productos** y **Config** (los nombres tienen que ser exactamente esos, sin tilde).
 3. Borrar la pestaña vacía "Hoja 1".
 4. **Compartir → Acceso general → "Cualquier persona con el enlace" → Lector.**
-5. Copiar el código del link (lo que está entre `/d/` y `/edit`) y pegarlo en `SHEET_ID` dentro de `config.js`.
+5. Pegar el link de la planilla en `SHEET_ID` dentro de `config.js`.
 
 ## Cómo se usa la planilla
 

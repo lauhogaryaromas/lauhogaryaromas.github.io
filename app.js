@@ -2,6 +2,8 @@
   "use strict";
 
   const CFG = window.CONFIG || {};
+  // Acepta el código solo o el link completo de la planilla.
+  CFG.SHEET_ID = String(CFG.SHEET_ID || "").trim().replace(/^.*\/spreadsheets\/d\/([\w-]+).*$/, "$1");
   const app = document.getElementById("app");
   const aviso = document.getElementById("aviso");
 
