@@ -286,7 +286,10 @@
 
   function pantallaInicio() {
     document.title = `${CFG.NOMBRE} · Catálogo`;
-    const cats = [...DATOS.catalogos].sort((a, b) => a.vencido - b.vencido);
+    // Los catálogos sin productos no se muestran.
+    const cats = DATOS.catalogos
+      .filter((c) => DATOS.productos.some((p) => p.catalogo === c.slug))
+      .sort((a, b) => a.vencido - b.vencido);
     if (!cats.length) {
       app.innerHTML = `<p class="vacio">Pronto vas a encontrar acá nuestros catálogos.</p>`;
       return;

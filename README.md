@@ -24,7 +24,7 @@ Los productos, precios y catálogos se cargan desde una planilla de Google Sheet
 |---|---|
 | Catálogo | Nombre, ej. `Navidad` |
 | Descripción | Texto corto que aparece en la tarjeta |
-| Visible | `SÍ` para mostrarlo, `NO` para esconderlo |
+| Visible | `SÍ` para mostrarlo, `NO` para esconderlo. Los catálogos sin productos no se muestran |
 | Vigente desde | Opcional, ej. `1/12/2026`. Antes de esa fecha el catálogo no se ve |
 | Vigente hasta | Opcional, ej. `24/12/2026`. Pasada esa fecha aparece como "Finalizado" |
 | Imagen | Opcional, link de una foto |
