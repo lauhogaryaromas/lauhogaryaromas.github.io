@@ -1,6 +1,6 @@
 # LAU Hogar y Aromas — Catálogo
 
-Catálogo online publicado en GitHub Pages. Los productos, precios y catálogos se cargan desde una planilla de Google Sheets: se edita la planilla y la página se actualiza sola.
+Catálogo online publicado en GitHub Pages: https://lauhogaryaromas.github.io Los productos, precios y catálogos se cargan desde una planilla de Google Sheets: se edita la planilla y la página se actualiza sola.
 
 - Pantalla de inicio con los catálogos (general, Navidad, Día de la Madre, etc.) y si están vigentes.
 - Cada catálogo con sus productos, agrupados por categoría, con buscador.
