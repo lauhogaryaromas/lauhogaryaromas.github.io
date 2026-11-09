@@ -57,3 +57,7 @@ Los cambios en la planilla se ven al recargar la página (a veces tarda 1 o 2 mi
 ## Desarrollo
 
 HTML, CSS y JS puros, sin build. Para probar local: `python3 -m http.server` y abrir `http://localhost:8000`. Sin `SHEET_ID` muestra datos de ejemplo.
+
+## Panel de administración
+
+En `apps-script/` está el panel para el celular (cambiar precios, stock, fotos y agregar productos). Instalación en [`apps-script/INSTRUCCIONES.md`](apps-script/INSTRUCCIONES.md).

@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LAU · Administrar catálogo</title>
+  <style>
+    :root {
+      --fondo: #f6efe6; --tarjeta: #fffaf4; --texto: #3b2f2a; --suave: #7a6a60;
+      --acento: #8a6a4f; --borde: #e6d9ca; --verde: #2f7d4f; --rojo: #9a4b3a;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fondo); color: var(--texto); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    header { position: sticky; top: 0; z-index: 5; background: var(--fondo); border-bottom: 1px solid var(--borde); padding: 12px 16px 10px; }
+    h1 { font-size: 1.15rem; margin: 0 0 8px; letter-spacing: .02em; }
+    h1 span { color: var(--suave); font-weight: 400; }
+    .barra { display: flex; gap: 8px; }
+    input, select, textarea { font: inherit; color: inherit; background: #fff; border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; width: 100%; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid #c9a98a; outline-offset: 0; }
+    button { font: inherit; cursor: pointer; border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600; }
+    .btn { background: var(--acento); color: #fff; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .btn-sec { background: #fff; color: var(--texto); border: 1px solid var(--borde); }
+    .chips { display: flex; gap: 6px; overflow-x: auto; margin-top: 8px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip { flex: none; background: #fff; border: 1px solid var(--borde); padding: 6px 12px; border-radius: 99px; font-weight: 500; font-size: .88rem; }
+    .chip[aria-pressed="true"] { background: var(--acento); color: #fff; border-color: var(--acento); }
+    main { padding: 14px 16px 90px; max-width: 760px; margin: 0 auto; }
+    .estado { text-align: center; color: var(--suave); padding: 30px 0; }
+    .grupo { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); margin: 18px 0 8px; }
+
+    .prod { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 84px 1fr; gap: 12px; }
+    .foto { position: relative; width: 84px; height: 84px; border-radius: 10px; overflow: hidden; background: #efe3d5; display: grid; place-items: center; color: var(--acento); font-size: .72rem; text-align: center; }
+    .foto img { width: 100%; height: 100%; object-fit: cover; }
+    .foto.cargando::after { content: "Subiendo…"; position: absolute; inset: 0; background: rgba(255,250,244,.85); display: grid; place-items: center; font-weight: 600; }
+    .nombre { font-weight: 700; line-height: 1.25; }
+    .sub { color: var(--suave); font-size: .82rem; }
+    .fila { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+    .precio { position: relative; flex: 1 1 120px; }
+    .precio span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--suave); }
+    .precio input { padding-left: 24px; }
+    .stock { display: inline-flex; border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; }
+    .stock button { border-radius: 0; background: #fff; color: var(--suave); padding: 9px 12px; font-size: .88rem; }
+    .stock button.on.si { background: #e5f2ea; color: var(--verde); }
+    .stock button.on.no { background: #f6e4df; color: var(--rojo); }
+    .acciones { display: flex; gap: 8px; margin-top: 8px; }
+    .acciones .btn-sec { font-size: .88rem; padding: 8px 12px; }
+    .guardar { font-size: .88rem; padding: 8px 14px; }
+    .ok { color: var(--verde); font-size: .85rem; font-weight: 600; align-self: center; }
+
+    .nuevo-btn { position: fixed; right: 16px; bottom: 16px; z-index: 6; border-radius: 99px; padding: 14px 20px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+    dialog { border: 0; border-radius: 16px; padding: 0; width: min(520px, calc(100vw - 24px)); background: var(--tarjeta); color: var(--texto); }
+    dialog::backdrop { background: rgba(30,20,15,.5); }
+    dialog form { padding: 18px 16px; display: grid; gap: 10px; }
+    dialog h2 { margin: 0 0 4px; font-size: 1.1rem; }
+    label { font-size: .85rem; font-weight: 600; display: grid; gap: 4px; }
+    .vista { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; background: #efe3d5; }
+    .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--texto); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: .9rem; z-index: 20; max-width: calc(100vw - 32px); }
+    .toast.error { background: var(--rojo); }
+    .oculto { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>LAU <span>· Administrar catálogo</span></h1>
+    <div class="barra"><input id="buscar" type="search" placeholder="Buscar producto…"></div>
+    <div id="chips" class="chips"></div>
+  </header>
+
+  <main id="lista"><p class="estado">Cargando productos…</p></main>
+
+  <button id="nuevo" class="btn nuevo-btn" type="button">＋ Nuevo producto</button>
+
+  <dialog id="dlg">
+    <form id="form-nuevo" method="dialog">
+      <h2>Nuevo producto</h2>
+      <label>Catálogo <select name="catalogo" required></select></label>
+      <label>Nombre <input name="nombre" required autocomplete="off"></label>
+      <div class="dos">
+        <label>Precio <input name="precio" inputmode="numeric" placeholder="8500"></label>
+        <label>Categoría <input name="categoria" list="cats" placeholder="Velas, Combos…" autocomplete="off"></label>
+      </div>
+      <datalist id="cats"></datalist>
+      <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
+      <label>Foto <input name="foto" type="file" accept="image/*"></label>
+      <img id="vista-nuevo" class="vista oculto" alt="">
+      <div class="fila">
+        <button type="button" class="btn-sec" id="cancelar">Cancelar</button>
+        <button type="submit" class="btn" style="flex:1" id="crear">Agregar</button>
+      </div>
+    </form>
+  </dialog>
+
+<script>
+  // Para probar fuera de Google: datos de mentira.
+  if (typeof google === "undefined") {
+    const demo = {
+      catalogos: ["Catálogo general", "Navidad"], categorias: ["Combos", "Velas"],
+      productos: [
+        { fila: 2, catalogo: "Catálogo general", categoria: "Velas", nombre: "Vela de soja 200 g", descripcion: "", precio: "8500", miniatura: "", disponible: true },
+        { fila: 3, catalogo: "Navidad", categoria: "Combos", nombre: "Combo Noche Buena", descripcion: "", precio: "19900", miniatura: "", disponible: false },
+      ],
+    };
+    const runner = (ok, err) => new Proxy({}, { get: (_, fn) => fn === "withSuccessHandler" ? (f) => runner(f, err) : fn === "withFailureHandler" ? (f) => runner(ok, f) :
+      (...a) => setTimeout(() => ok && ok(fn === "obtenerDatos" ? demo : fn === "guardarCambios" ? { fila: a[0].fila, miniatura: a[0].foto ? "data:image/jpeg;base64," + a[0].foto.base64 : null } : true), 400) });
+    window.google = { script: { get run() { return runner(); } } };
+  }
+
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const norm = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  let DATOS = { productos: [], catalogos: [], categorias: [] };
+  let filtroCat = "";
+
+  function llamar(fn, ...args) {
+    return new Promise((ok, mal) => google.script.run.withSuccessHandler(ok).withFailureHandler(mal)[fn](...args));
+  }
+
+  function aviso(texto, error) {
+    const t = document.createElement("div");
+    t.className = "toast" + (error ? " error" : "");
+    t.textContent = texto;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), error ? 5000 : 2200);
+  }
+
+  // Achica la foto antes de subirla (más rápido y liviano).
+  function prepararFoto(file, max = 1400) {
+    return new Promise((ok, mal) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        const dataUrl = c.toDataURL("image/jpeg", 0.85);
+        ok({ base64: dataUrl.split(",")[1], tipo: "image/jpeg", dataUrl });
+      };
+      img.onerror = () => mal(new Error("No se pudo leer la foto."));
+      img.src = url;
+    });
+  }
+
+  async function cargar() {
+    try {
+      DATOS = await llamar("obtenerDatos");
+      dibujarChips();
+      dibujar();
+    } catch (e) {
+      $("#lista").innerHTML = `<p class="estado">No se pudo cargar: ${esc(e.message)}</p>`;
+    }
+  }
+
+  function dibujarChips() {
+    const cats = ["", ...DATOS.catalogos];
+    $("#chips").innerHTML = cats.map((c) => `<button class="chip" type="button" data-c="${esc(c)}" aria-pressed="${c === filtroCat}">${esc(c || "Todos")}</button>`).join("");
+    $("#form-nuevo").catalogo.innerHTML = DATOS.catalogos.map((c) => `<option>${esc(c)}</option>`).join("");
+    $("#cats").innerHTML = DATOS.categorias.map((c) => `<option value="${esc(c)}">`).join("");
+  }
+
+  $("#chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    filtroCat = b.dataset.c;
+    $("#chips").querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    dibujar();
+  });
+  $("#buscar").addEventListener("input", dibujar);
+
+  function tarjeta(p) {
+    return `
+      <article class="prod" data-fila="${p.fila}">
+        <div class="foto">${p.miniatura ? `<img src="${esc(p.miniatura)}" alt="" loading="lazy">` : "Sin foto"}</div>
+        <div>
+          <div class="nombre">${esc(p.nombre)}</div>
+          <div class="sub">${esc([p.catalogo, p.categoria].filter(Boolean).join(" · "))}</div>
+          <div class="fila">
+            <div class="precio"><span>$</span><input class="in-precio" inputmode="numeric" value="${esc(p.precio)}" placeholder="Consultar" aria-label="Precio"></div>
+            <div class="stock" role="group" aria-label="Stock">
+              <button type="button" class="si ${p.disponible ? "on" : ""}" data-v="1">Hay stock</button>
+              <button type="button" class="no ${p.disponible ? "" : "on"}" data-v="0">Sin stock</button>
+            </div>
+          </div>
+          <div class="acciones">
+            <label class="btn-sec" style="display:inline-block;font-weight:600;cursor:pointer">📷 ${p.miniatura ? "Cambiar foto" : "Agregar foto"}<input type="file" accept="image/*" class="in-foto" hidden></label>
+            <button type="button" class="btn guardar oculto">Guardar</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function dibujar() {
+    const q = norm($("#buscar").value.trim());
+    const lista = DATOS.productos.filter((p) =>
+      (!filtroCat || p.catalogo === filtroCat) && (!q || norm(p.nombre + " " + p.categoria + " " + p.catalogo).includes(q)));
+    if (!lista.length) { $("#lista").innerHTML = `<p class="estado">${DATOS.productos.length ? "No hay productos con esa búsqueda." : "Todavía no hay productos. Tocá “Nuevo producto”."}</p>`; return; }
+    const grupos = {};
+    lista.forEach((p) => (grupos[p.catalogo] = grupos[p.catalogo] || []).push(p));
+    $("#lista").innerHTML = Object.entries(grupos).map(([c, ps]) =>
+      `${filtroCat ? "" : `<div class="grupo">${esc(c || "Sin catálogo")}</div>`}${ps.map(tarjeta).join("")}`).join("");
+  }
+
+  const producto = (el) => DATOS.productos.find((p) => p.fila === Number(el.closest(".prod").dataset.fila));
+
+  // Mostrar "Guardar" cuando cambia algo
+  function marcarCambio(card) {
+    const p = producto(card);
+    const precio = $(".in-precio", card).value.trim();
+    const disp = $(".stock .si", card).classList.contains("on");
+    $(".guardar", card).classList.toggle("oculto", precio === String(p.precio) && disp === p.disponible);
+  }
+
+  $("#lista").addEventListener("input", (e) => { if (e.target.classList.contains("in-precio")) marcarCambio(e.target.closest(".prod")); });
+
+  $("#lista").addEventListener("click", async (e) => {
+    const card = e.target.closest(".prod"); if (!card) return;
+    const st = e.target.closest(".stock button");
+    if (st) {
+      card.querySelectorAll(".stock button").forEach((b) => b.classList.toggle("on", b === st));
+      marcarCambio(card);
+      return;
+    }
+    const g = e.target.closest(".guardar");
+    if (g) {
+      const p = producto(card);
+      const precio = $(".in-precio", card).value.trim();
+      const disponible = $(".stock .si", card).classList.contains("on");
+      g.disabled = true; g.textContent = "Guardando…";
+      try {
+        const r = await llamar("guardarCambios", { fila: p.fila, nombre: p.nombre, precio, disponible });
+        p.fila = r.fila; card.dataset.fila = r.fila;
+        p.precio = precio.replace(/[$\s.]/g, ""); p.disponible = disponible;
+        $(".in-precio", card).value = p.precio;
+        aviso("Guardado ✓");
+        g.classList.add("oculto");
+      } catch (err) { aviso(err.message, true); }
+      g.disabled = false; g.textContent = "Guardar";
+    }
+  });
+
+  $("#lista").addEventListener("change", async (e) => {
+    if (!e.target.classList.contains("in-foto")) return;
+    const file = e.target.files[0]; if (!file) return;
+    const card = e.target.closest(".prod"); const p = producto(card);
+    const caja = $(".foto", card);
+    try {
+      const foto = await prepararFoto(file);
+      caja.innerHTML = `<img src="${foto.dataUrl}" alt="">`;
+      caja.classList.add("cargando");
+      const r = await llamar("guardarCambios", { fila: p.fila, nombre: p.nombre, foto: { base64: foto.base64, tipo: foto.tipo } });
+      p.fila = r.fila; card.dataset.fila = r.fila; p.miniatura = r.miniatura;
+      aviso("Foto guardada ✓");
+    } catch (err) { aviso(err.message, true); caja.innerHTML = p.miniatura ? `<img src="${esc(p.miniatura)}" alt="">` : "Sin foto"; }
+    caja.classList.remove("cargando");
+    e.target.value = "";
+  });
+
+  // ---------- Nuevo producto ----------
+  const dlg = $("#dlg"), form = $("#form-nuevo");
+  let fotoNueva = null;
+  $("#nuevo").addEventListener("click", () => {
+    form.reset(); fotoNueva = null; $("#vista-nuevo").classList.add("oculto");
+    if (filtroCat) form.catalogo.value = filtroCat;
+    dlg.showModal();
+  });
+  $("#cancelar").addEventListener("click", () => dlg.close());
+  form.foto.addEventListener("change", async () => {
+    const f = form.foto.files[0]; if (!f) return;
+    try { fotoNueva = await prepararFoto(f); $("#vista-nuevo").src = fotoNueva.dataUrl; $("#vista-nuevo").classList.remove("oculto"); }
+    catch (err) { aviso(err.message, true); }
+  });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const b = $("#crear"); b.disabled = true; b.textContent = "Agregando…";
+    try {
+      await llamar("agregarProducto", {
+        catalogo: form.catalogo.value, nombre: form.nombre.value, precio: form.precio.value.trim(),
+        categoria: form.categoria.value, descripcion: form.descripcion.value, disponible: true,
+        foto: fotoNueva ? { base64: fotoNueva.base64, tipo: fotoNueva.tipo } : null,
+      });
+      dlg.close();
+      aviso("Producto agregado ✓");
+      await cargar();
+    } catch (err) { aviso(err.message, true); }
+    b.disabled = false; b.textContent = "Agregar";
+  });
+
+  cargar();
+</script>
+</body>
+</html>
