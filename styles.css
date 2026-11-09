@@ -63,9 +63,11 @@ h1, h2 { font-family: "Cormorant Garamond", serif; font-weight: 600; margin: 0; 
 .bajada { text-align: center; color: var(--suave); margin: 0 auto 22px; max-width: 520px; }
 
 /* Inicio: lista de catálogos */
-.catalogos { display: grid; gap: 14px; grid-template-columns: 1fr; }
-@media (min-width: 640px) { .catalogos { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 960px) { .catalogos { grid-template-columns: repeat(3, 1fr); } }
+/* Tarjetas centradas: si hay una o dos, no quedan pegadas a la izquierda */
+.catalogos { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.catalogos > .cat { flex: 1 1 100%; }
+@media (min-width: 640px) { .catalogos > .cat { flex: 0 1 calc((100% - 14px) / 2); } }
+@media (min-width: 960px) { .catalogos > .cat { flex: 0 1 calc((100% - 28px) / 3); } }
 
 .cat {
   display: flex; flex-direction: column;
