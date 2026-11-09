@@ -71,3 +71,5 @@ HTML, CSS y JS puros, sin build. Para probar local: `python3 -m http.server` y a
 ## Panel de administración
 
 En `apps-script/` está el panel para el celular (cambiar precios, stock, fotos y agregar productos). Instalación en [`apps-script/INSTRUCCIONES.md`](apps-script/INSTRUCCIONES.md).
+
+Al cambiar `app.js`, `styles.css` o `config.js`, actualizar el número `?v=` en `index.html` (y `config.js?v=` en `admin.html`) para que los celulares no sigan usando la versión vieja guardada.
