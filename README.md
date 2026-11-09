@@ -6,7 +6,7 @@ Los productos, precios y catálogos se cargan desde una planilla de Google Sheet
 
 - Pantalla de inicio con los catálogos (general, Navidad, Día de la Madre, etc.) y si están vigentes.
 - Cada catálogo con sus productos, agrupados por categoría, con buscador.
-- Botón "Pedir por WhatsApp" en cada producto con el mensaje ya escrito.
+- Carrito: los clientes agregan varios productos, eligen cantidades, escriben aclaraciones (ej. aromas) y mandan todo en un solo mensaje de WhatsApp. El pedido queda guardado en su celular si salen de la página.
 
 ## Armar la planilla (una sola vez)
 

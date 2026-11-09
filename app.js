@@ -198,7 +198,9 @@
 
     DATOS = { config, catalogos, productos, aromas };
     prepararWhatsApp();
+    cargarCarrito();
     render();
+    actualizarCarrito();
   }
 
   function mostrarAviso(t) { aviso.textContent = t; aviso.hidden = false; }
@@ -347,11 +349,7 @@
       const img = p.imagen
         ? `<img class="prod-img" src="${esc(p.imagen)}" alt="${esc(p.nombre)}" loading="lazy">`
         : `<div class="prod-img sin-foto" aria-hidden="true">✿</div>`;
-      const boton = !p.disponible
-        ? `<span class="etiqueta agotado">Sin stock</span>`
-        : numeroWA()
-          ? `<a class="btn-wa" target="_blank" rel="noopener" href="${linkWA(`¡Hola! Me interesa "${p.nombre}" del catálogo ${cat.nombre} (${precioTexto(p.precio)}).`)}">Pedir por WhatsApp</a>`
-          : "";
+      const boton = `<div class="prod-accion" data-key="${esc(claveProd(p))}">${accionHTML(p)}</div>`;
       return `
         <article class="prod${p.disponible ? "" : " no-disp"}">
           ${img}
@@ -393,6 +391,182 @@
     dibujar();
     window.scrollTo(0, 0);
   }
+
+  // ---------- Carrito ----------
+  const CLAVE_CARRITO = "lau-carrito";
+  const CLAVE_DATOS = "lau-carrito-datos";
+  let carrito = []; // [{ key, cant }]
+  const claveProd = (p) => p.catalogo + "|" + p.nombre;
+  const prodDe = (key) => DATOS.productos.find((p) => claveProd(p) === key);
+  const cantDe = (key) => (carrito.find((i) => i.key === key) || {}).cant || 0;
+  const nombreCat = (slugCat) => (DATOS.catalogos.find((c) => c.slug === slugCat) || {}).nombre || "";
+  const pesos = (n) => "$ " + n.toLocaleString("es-AR", { maximumFractionDigits: 2 });
+
+  function precioNum(p) {
+    if (!p) return null;
+    const limpio = String(p).replace(/[$\s]/g, "").replace(/\./g, "").replace(",", ".");
+    const n = Number(limpio);
+    return limpio !== "" && !isNaN(n) ? n : null;
+  }
+
+  function guardarCarrito() {
+    try { localStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito)); } catch (e) { /* sin almacenamiento */ }
+  }
+
+  function cargarCarrito() {
+    let guardado = [];
+    try { guardado = JSON.parse(localStorage.getItem(CLAVE_CARRITO) || "[]"); } catch (e) { guardado = []; }
+    // Sacar lo que ya no existe o se quedó sin stock
+    carrito = (Array.isArray(guardado) ? guardado : [])
+      .filter((i) => i && prodDe(i.key) && prodDe(i.key).disponible)
+      .map((i) => ({ key: i.key, cant: Math.max(1, Math.min(99, parseInt(i.cant, 10) || 1)) }));
+    guardarCarrito();
+    try {
+      const d = JSON.parse(localStorage.getItem(CLAVE_DATOS) || "{}");
+      $id("carrito-nota").value = d.nota || "";
+      $id("carrito-nombre").value = d.nombre || "";
+    } catch (e) { /* nada */ }
+  }
+
+  function cambiarCant(key, delta) {
+    const it = carrito.find((i) => i.key === key);
+    if (it) it.cant = Math.max(0, Math.min(99, it.cant + delta));
+    else if (delta > 0) { carrito.push({ key, cant: delta }); mostrarToast("Agregado al pedido ✓"); }
+    carrito = carrito.filter((i) => i.cant > 0);
+    guardarCarrito();
+    actualizarCarrito();
+  }
+
+  function accionHTML(p) {
+    if (!p.disponible) return `<span class="etiqueta agotado">Sin stock</span>`;
+    if (!numeroWA()) return "";
+    const k = esc(claveProd(p)), n = cantDe(claveProd(p));
+    return n
+      ? `<div class="stepper" role="group" aria-label="Cantidad de ${esc(p.nombre)}">
+           <button type="button" data-menos="${k}" aria-label="Quitar uno">−</button>
+           <span aria-live="polite">${n}</span>
+           <button type="button" data-mas="${k}" aria-label="Agregar uno">+</button>
+         </div>`
+      : `<button type="button" class="btn-agregar" data-mas="${k}">Agregar al pedido</button>`;
+  }
+
+  function totales() {
+    let n = 0, total = 0, consultar = false;
+    for (const it of carrito) {
+      const p = prodDe(it.key); if (!p) continue;
+      n += it.cant;
+      const v = precioNum(p.precio);
+      if (v == null) consultar = true; else total += v * it.cant;
+    }
+    return { n, total, consultar };
+  }
+
+  const $id = (id) => document.getElementById(id);
+
+  function actualizarCarrito() {
+    document.querySelectorAll(".prod-accion").forEach((el) => {
+      const p = prodDe(el.dataset.key);
+      if (p) el.innerHTML = accionHTML(p);
+    });
+    const { n, total, consultar } = totales();
+    const barra = $id("carrito-barra");
+    barra.hidden = !n;
+    document.body.classList.toggle("con-carrito", n > 0);
+    if (n) {
+      $id("barra-cant").textContent = `${n} producto${n === 1 ? "" : "s"}`;
+      $id("barra-total").textContent = total ? pesos(total) + (consultar ? " + a consultar" : "") : "A consultar";
+    }
+    if ($id("carrito").open) dibujarCarrito();
+  }
+
+  function dibujarCarrito() {
+    const lista = $id("carrito-lista");
+    if (!carrito.length) {
+      lista.innerHTML = `<li class="carrito-vacio">Tu pedido está vacío.</li>`;
+      $id("carrito-total").innerHTML = "";
+      $id("carrito-enviar").classList.add("oculto");
+      return;
+    }
+    const varios = new Set(carrito.map((i) => prodDe(i.key).catalogo)).size > 1;
+    lista.innerHTML = carrito.map((it) => {
+      const p = prodDe(it.key), v = precioNum(p.precio), k = esc(it.key);
+      return `
+        <li class="item">
+          <div class="item-info">
+            <strong>${esc(p.nombre)}</strong>
+            <span>${varios ? esc(nombreCat(p.catalogo)) + " · " : ""}${v == null ? "Precio a consultar" : pesos(v) + " c/u"}</span>
+          </div>
+          <div class="item-der">
+            <div class="stepper chico" role="group" aria-label="Cantidad">
+              <button type="button" data-menos="${k}" aria-label="Quitar uno">−</button>
+              <span>${it.cant}</span>
+              <button type="button" data-mas="${k}" aria-label="Agregar uno">+</button>
+            </div>
+            <span class="item-sub">${v == null ? "—" : pesos(v * it.cant)}</span>
+          </div>
+        </li>`;
+    }).join("");
+    const { total, consultar } = totales();
+    $id("carrito-total").innerHTML = `<span>Total</span><strong>${total ? pesos(total) : "A consultar"}</strong>` +
+      (consultar && total ? `<small>Más los productos con precio a consultar.</small>` : "");
+    $id("carrito-enviar").classList.remove("oculto");
+  }
+
+  function mensajePedido() {
+    const varios = new Set(carrito.map((i) => prodDe(i.key).catalogo)).size > 1;
+    const lineas = carrito.map((it) => {
+      const p = prodDe(it.key), v = precioNum(p.precio);
+      return `• ${it.cant} × ${p.nombre}${varios ? ` (${nombreCat(p.catalogo)})` : ""} — ${v == null ? "a consultar" : pesos(v * it.cant)}`;
+    });
+    const { total, consultar } = totales();
+    const nota = $id("carrito-nota").value.trim();
+    const nombre = $id("carrito-nombre").value.trim();
+    let msg = `¡Hola! Quiero hacer este pedido:\n\n${lineas.join("\n")}\n\n`;
+    msg += total ? `*Total: ${pesos(total)}*${consultar ? " (más los productos a consultar)" : ""}` : "Total: a consultar";
+    if (nota) msg += `\n\nAclaraciones: ${nota}`;
+    if (nombre) msg += `\n\nNombre: ${nombre}`;
+    return msg;
+  }
+
+  function guardarDatosCarrito() {
+    try {
+      localStorage.setItem(CLAVE_DATOS, JSON.stringify({ nota: $id("carrito-nota").value, nombre: $id("carrito-nombre").value }));
+    } catch (e) { /* nada */ }
+  }
+
+  function mostrarToast(texto) {
+    document.querySelector(".toast")?.remove();
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = texto;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 1800);
+  }
+
+  // Botones + / − / Agregar (en productos y dentro del pedido)
+  document.addEventListener("click", (e) => {
+    const mas = e.target.closest("[data-mas]");
+    if (mas) { cambiarCant(mas.dataset.mas, 1); return; }
+    const menos = e.target.closest("[data-menos]");
+    if (menos) { cambiarCant(menos.dataset.menos, -1); return; }
+  });
+
+  $id("carrito-barra").addEventListener("click", () => { dibujarCarrito(); $id("carrito").showModal(); });
+  $id("carrito-cerrar").addEventListener("click", () => $id("carrito").close());
+  $id("carrito").addEventListener("click", (e) => { if (e.target === $id("carrito")) $id("carrito").close(); });
+  $id("carrito-nota").addEventListener("input", guardarDatosCarrito);
+  $id("carrito-nombre").addEventListener("input", guardarDatosCarrito);
+  $id("carrito-enviar").addEventListener("click", (e) => {
+    if (!carrito.length || !numeroWA()) { e.preventDefault(); return; }
+    e.currentTarget.href = linkWA(mensajePedido());
+  });
+  $id("carrito-vaciar").addEventListener("click", () => {
+    if (!confirm("¿Vaciar el pedido?")) return;
+    carrito = [];
+    guardarCarrito();
+    actualizarCarrito();
+    $id("carrito").close();
+  });
 
   // Foto ampliada al tocar una imagen de producto
   app.addEventListener("click", (e) => {
