@@ -241,7 +241,7 @@
     return `
       <a class="banner-aromas" href="#/aromas">
         <span class="banner-ico" aria-hidden="true">✿</span>
-        <span class="banner-txt"><strong>Aromas disponibles</strong><span>${total} fragancias para velas, difusores, home spray y perfumes</span></span>
+        <span class="banner-txt"><strong>Aromas disponibles</strong><span>${total} fragancias para velas, difusores, home spray, perfumes y más</span></span>
         <span class="banner-flecha" aria-hidden="true">→</span>
       </a>`;
   }
