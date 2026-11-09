@@ -56,7 +56,8 @@
     dialog h2 { margin: 0 0 4px; font-size: 1.1rem; }
     label { font-size: .85rem; font-weight: 600; display: grid; gap: 4px; }
     .vista { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; background: #efe3d5; }
-    .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .dos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .dos label { min-width: 0; }
 
     .tabs { display: flex; gap: 4px; background: #ecdfd0; padding: 3px; border-radius: 12px; margin-bottom: 10px; }
     .tabs button { flex: 1; background: transparent; color: var(--suave); padding: 8px; font-size: .92rem; }
@@ -67,9 +68,13 @@
     .e-vigente { background: #e5f2ea; color: var(--verde); }
     .e-prog { background: #e7ecf6; color: #3d5a8a; }
     .e-fin, .e-oculto { background: #f1e6e2; color: var(--rojo); }
-    .fechas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-    .fechas label { font-weight: 600; font-size: .8rem; color: var(--suave); }
+    .fechas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    .fechas label { font-weight: 600; font-size: .8rem; color: var(--suave); min-width: 0; }
     .fechas input { padding: 8px 10px; }
+    /* Los campos de fecha del celular tienen un ancho mínimo propio: forzarlos a entrar en su columna */
+    input[type="date"] { min-width: 0; max-width: 100%; width: 100%; display: block; -webkit-appearance: none; appearance: none; min-height: 42px; }
+    input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+    @media (max-width: 360px) { .fechas, .dos { grid-template-columns: minmax(0, 1fr); } }
     .ayuda { font-size: .8rem; color: var(--suave); margin: 0 0 12px; }
     .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--texto); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: .9rem; z-index: 20; max-width: calc(100vw - 32px); }
     .toast.error { background: var(--rojo); }
