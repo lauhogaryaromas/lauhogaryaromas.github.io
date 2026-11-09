@@ -156,3 +156,37 @@ h1, h2 { font-family: "Cormorant Garamond", serif; font-weight: 600; margin: 0; 
 .pie { text-align: center; color: var(--suave); font-size: .82rem; padding: 18px 16px 28px; border-top: 1px solid var(--borde); }
 .pie p { margin: 2px 0; }
 .pie a { color: var(--acento); }
+
+/* Aromas */
+.banner-aromas {
+  display: flex; align-items: center; gap: 12px;
+  max-width: 560px; margin: 0 auto 22px; padding: 14px 16px;
+  background: linear-gradient(135deg, #fff6ea, #f3e2cf);
+  border: 1px solid var(--borde); border-radius: var(--radio);
+  box-shadow: var(--sombra); text-decoration: none;
+  transition: transform .15s ease;
+}
+.banner-aromas:hover, .banner-aromas:focus-visible { transform: translateY(-1px); }
+.banner-ico {
+  flex: none; width: 42px; height: 42px; border-radius: 50%;
+  background: var(--acento); color: #fff; display: grid; place-items: center; font-size: 1.3rem;
+}
+.banner-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.banner-txt strong { font-family: "Cormorant Garamond", serif; font-size: 1.3rem; line-height: 1.2; }
+.banner-txt span { color: var(--suave); font-size: .85rem; }
+.banner-flecha { color: var(--acento); font-weight: 700; font-size: 1.2rem; }
+
+.aromas-grupo {
+  background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--sombra);
+}
+.aromas-grupo h2 { font-size: 1.35rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.aromas-grupo h2 span {
+  font-family: "Nunito Sans", sans-serif; font-size: .75rem; font-weight: 700;
+  background: #efe3d5; color: var(--acento); padding: 2px 8px; border-radius: 99px;
+}
+.aromas { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.aromas li {
+  background: #fff; border: 1px solid var(--borde); border-radius: 99px;
+  padding: 5px 12px; font-size: .88rem;
+}

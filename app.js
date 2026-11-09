@@ -26,6 +26,12 @@
       ["Navidad", "Combos", "Combo Arbolito", "Home spray + 2 velas chicas.", "15500", "", "SÍ"],
       ["Día de la Madre", "Combos", "Combo Mamá", "Difusor + vela + bolsita de regalo.", "18000", "", "SÍ"],
     ],
+    Aromas: [
+      ["Tipo", "Aroma"],
+      ["Velas", "Coco & vainilla"], ["Velas", "Gardenia"],
+      ["Difusores", "Verbena"], ["Difusores", "Mandarina"], ["Difusores", "Green tea"],
+      ["Perfumes femeninos", "Good Girl"], ["Perfumes masculinos", "Invictus"],
+    ],
     Config: [
       ["Clave", "Valor"],
       ["WhatsApp", ""],
@@ -133,10 +139,11 @@
       mostrarAviso("Vista de ejemplo: todavía no hay planilla conectada.");
     } else {
       try {
-        const [c, p, k] = await Promise.all([
+        const [c, p, k, a] = await Promise.all([
           hoja("Catalogos"), hoja("Productos"), hoja("Config").catch(() => [["Clave", "Valor"]]),
+          hoja("Aromas").catch(() => [["Tipo", "Aroma"]]),
         ]);
-        crudo = { Catalogos: c, Productos: p, Config: k };
+        crudo = { Catalogos: c, Productos: p, Config: k, Aromas: a };
       } catch (e) {
         console.error(e);
         app.innerHTML = `<p class="vacio">No pudimos cargar el catálogo. Probá de nuevo en un rato.</p>`;
@@ -178,7 +185,18 @@
       }))
       .filter((p) => p.nombre);
 
-    DATOS = { config, catalogos, productos };
+    // Aromas agrupados por tipo, en el orden de la planilla.
+    const aromas = [];
+    for (const o of aObjetos(crudo.Aromas || [])) {
+      const tipo = col(o, "tipo", "grupo", "categoria") || "Otros";
+      const nombre = col(o, "aroma", "nombre", "fragancia");
+      if (!nombre) continue;
+      let g = aromas.find((x) => x.tipo === tipo);
+      if (!g) aromas.push((g = { tipo, lista: [] }));
+      g.lista.push(nombre);
+    }
+
+    DATOS = { config, catalogos, productos, aromas };
     prepararWhatsApp();
     render();
   }
@@ -206,12 +224,64 @@
   function render() {
     if (!DATOS) return;
     const ruta = location.hash.replace(/^#\/?/, "");
+    if (ruta.startsWith("aromas") && DATOS.aromas.length) return pantallaAromas();
     const m = ruta.match(/^c\/([^/?]+)/);
     if (m) {
       const cat = DATOS.catalogos.find((c) => c.slug === m[1]);
       if (cat) return pantallaCatalogo(cat);
     }
     pantallaInicio();
+  }
+
+  function bannerAromas() {
+    if (!DATOS.aromas.length) return "";
+    const total = DATOS.aromas.reduce((n, g) => n + g.lista.length, 0);
+    return `
+      <a class="banner-aromas" href="#/aromas">
+        <span class="banner-ico" aria-hidden="true">✿</span>
+        <span class="banner-txt"><strong>Aromas disponibles</strong><span>${total} fragancias para velas, difusores, home spray y perfumes</span></span>
+        <span class="banner-flecha" aria-hidden="true">→</span>
+      </a>`;
+  }
+
+  function pantallaAromas() {
+    document.title = `Aromas · ${CFG.NOMBRE}`;
+    const grupos = DATOS.aromas;
+    app.innerHTML = `
+      <a class="volver" href="#/">← Volver</a>
+      <h1 class="titulo">Aromas disponibles</h1>
+      <p class="bajada">Elegí tu fragancia favorita y mencionala en tu pedido.</p>
+      <input class="buscador" type="search" placeholder="Buscar aroma…" aria-label="Buscar aroma">
+      ${grupos.length > 1 ? `<div class="filtros" role="group" aria-label="Tipos">
+        <button class="chip" data-g="" aria-pressed="true">Todos</button>
+        ${grupos.map((g) => `<button class="chip" data-g="${esc(g.tipo)}" aria-pressed="false">${esc(g.tipo)}</button>`).join("")}
+      </div>` : ""}
+      <div id="lista-aromas"></div>`;
+
+    let filtro = "";
+    const buscador = app.querySelector(".buscador");
+    const lista = app.querySelector("#lista-aromas");
+    const dibujar = () => {
+      const q = norm(buscador.value);
+      const html = grupos
+        .filter((g) => !filtro || g.tipo === filtro)
+        .map((g) => [g, g.lista.filter((a) => !q || norm(a).includes(q))])
+        .filter(([, l]) => l.length)
+        .map(([g, l]) => `
+          <section class="aromas-grupo">
+            <h2>${esc(g.tipo)} <span>${l.length}</span></h2>
+            <ul class="aromas">${l.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>
+          </section>`).join("");
+      lista.innerHTML = html || `<p class="vacio">No encontramos ese aroma. Consultanos por WhatsApp.</p>`;
+    };
+    app.querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => {
+      filtro = b.dataset.g;
+      app.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      dibujar();
+    }));
+    buscador.addEventListener("input", dibujar);
+    dibujar();
+    window.scrollTo(0, 0);
   }
 
   function pantallaInicio() {
@@ -225,14 +295,16 @@
     app.innerHTML = `
       <h1 class="titulo">Nuestros catálogos</h1>
       <p class="bajada">${esc(bienvenida)}</p>
+      ${bannerAromas()}
       <div class="catalogos">
         ${cats.map((c) => {
           const cant = DATOS.productos.filter((p) => p.catalogo === c.slug).length;
           const etiqueta = c.vencido
             ? `<span class="etiqueta agotado">Finalizado</span>`
             : `<span class="etiqueta">${c.hasta ? "Vigente hasta " + esc(c.hasta) : "Vigente"}</span>`;
-          const img = c.imagen
-            ? `<img class="cat-img" src="${esc(c.imagen)}" alt="" loading="lazy">`
+          const foto = c.imagen || (DATOS.productos.find((p) => p.catalogo === c.slug && p.imagen) || {}).imagen;
+          const img = foto
+            ? `<img class="cat-img" src="${esc(foto)}" alt="" loading="lazy">`
             : `<div class="cat-img sin-foto">${esc(c.nombre.charAt(0))}</div>`;
           return `
             <a class="cat" href="#/c/${c.slug}">
@@ -258,6 +330,7 @@
       <a class="volver" href="#/">← Todos los catálogos</a>
       <h1 class="titulo">${esc(cat.nombre)}</h1>
       <p class="bajada">${esc(cat.descripcion)}${cat.vencido ? " · <strong>Este catálogo ya finalizó.</strong>" : cat.hasta ? ` · Vigente hasta ${esc(cat.hasta)}` : ""}</p>
+      ${bannerAromas()}
       ${prods.length > 6 ? `<input class="buscador" type="search" placeholder="Buscar producto…" aria-label="Buscar producto">` : ""}
       ${categorias.length > 1 ? `<div class="filtros" role="group" aria-label="Categorías">
         <button class="chip" data-cat="" aria-pressed="true">Todo</button>

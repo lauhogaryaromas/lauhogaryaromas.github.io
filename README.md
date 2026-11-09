@@ -11,7 +11,7 @@ Los productos, precios y catálogos se cargan desde una planilla de Google Sheet
 ## Armar la planilla (una sola vez)
 
 1. Crear una planilla nueva en Google Sheets.
-2. Importar los tres archivos de la carpeta `plantilla/` con **Archivo → Importar → Subir → "Insertar hojas nuevas"**. Quedan las pestañas **Catalogos**, **Productos** y **Config** (los nombres tienen que ser exactamente esos, sin tilde).
+2. Importar los archivos de la carpeta `plantilla/` con **Archivo → Importar → Subir → "Insertar hojas nuevas"**. Quedan las pestañas **Catalogos**, **Productos**, **Aromas** y **Config** (los nombres tienen que ser exactamente esos, sin tilde).
 3. Borrar la pestaña vacía "Hoja 1".
 4. **Compartir → Acceso general → "Cualquier persona con el enlace" → Lector.**
 5. Pegar el link de la planilla en `SHEET_ID` dentro de `config.js`.
@@ -42,6 +42,13 @@ Los productos, precios y catálogos se cargan desde una planilla de Google Sheet
 | Disponible | `SÍ` o `NO` (con `NO` aparece como "Sin stock") |
 
 El mismo producto puede estar en dos catálogos: se copia la fila y se cambia el catálogo.
+
+**Aromas** — una fila por aroma. Se muestran en la sección "Aromas disponibles" (acceso arriba de todo en el inicio y en cada catálogo), agrupados por tipo y con buscador.
+
+| Columna | Qué poner |
+|---|---|
+| Tipo | Grupo, ej. `Perfumes femeninos`, `Velas en cuenco`, `Home spray`, `Difusores` |
+| Aroma | Nombre del aroma |
 
 **Config**
 
