@@ -10,10 +10,11 @@
   // ---------- Datos de ejemplo (se usan si no hay planilla configurada) ----------
   const DEMO = {
     Catalogos: [
-      ["Catálogo", "Descripción", "Visible", "Vigente hasta", "Imagen"],
-      ["Catálogo general", "Todos nuestros productos para el hogar.", "SÍ", "", ""],
-      ["Navidad", "Combos y regalos para estas fiestas.", "SÍ", "24/12/2026", ""],
-      ["Día de la Madre", "Regalos especiales para mamá.", "SÍ", "18/10/2026", ""],
+      ["Catálogo", "Descripción", "Visible", "Vigente desde", "Vigente hasta", "Imagen"],
+      ["Catálogo general", "Todos nuestros productos para el hogar.", "SÍ", "", "", ""],
+      ["Navidad", "Combos y regalos para estas fiestas.", "SÍ", "1/11/2026", "24/12/2026", ""],
+      ["Día de la Madre", "Regalos especiales para mamá.", "SÍ", "1/10/2026", "18/10/2026", ""],
+      ["Reyes", "Aparece recién en diciembre.", "SÍ", "26/12/2026", "6/1/2027", ""],
     ],
     Productos: [
       ["Catálogo", "Categoría", "Producto", "Descripción", "Precio", "Imagen", "Disponible"],
@@ -93,16 +94,24 @@
     return p;
   }
 
-  // Acepta "24/12", "24/12/2026" o "2026-12-24". Devuelve el fin de ese día o null.
-  function parseFecha(s) {
+  // Acepta "24/12", "24/12/2026" o "2026-12-24". Devuelve el fin de ese día (o el inicio si inicio=true) o null.
+  function parseFecha(s, inicio) {
     if (!s) return null;
     let d, m, a;
     let r = s.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
     if (r) { d = +r[1]; m = +r[2]; a = r[3] ? +r[3] : new Date().getFullYear(); if (a < 100) a += 2000; }
     else if ((r = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) { a = +r[1]; m = +r[2]; d = +r[3]; }
     else return null;
-    const f = new Date(a, m - 1, d, 23, 59, 59);
+    const f = inicio ? new Date(a, m - 1, d, 0, 0, 0) : new Date(a, m - 1, d, 23, 59, 59);
     return isNaN(f) ? null : f;
+  }
+
+  // "24/12/2026" -> "24/12" si es de este año; si no, la deja igual.
+  function fechaCorta(s) {
+    const f = parseFecha(s);
+    if (!f) return s;
+    const dm = `${f.getDate()}/${f.getMonth() + 1}`;
+    return f.getFullYear() === new Date().getFullYear() ? dm : `${dm}/${f.getFullYear()}`;
   }
 
   // ---------- Carga de la planilla ----------
@@ -142,13 +151,16 @@
     const catalogos = aObjetos(crudo.Catalogos)
       .map((o) => {
         const nombre = col(o, "catalogo", "nombre");
-        const hasta = col(o, "vigente hasta", "hasta", "vigencia");
+        const desde = col(o, "vigente desde", "desde", "inicio");
+        const hasta = col(o, "vigente hasta", "hasta", "vigencia", "fin");
+        const ini = parseFecha(desde, true);
         const fin = parseFecha(hasta);
         return {
           nombre, slug: slug(nombre),
           descripcion: col(o, "descripcion"),
-          visible: siNo(col(o, "visible", "mostrar")),
-          hasta, vencido: fin ? fin < hoy : false,
+          // Antes de la fecha de inicio el catálogo no se muestra.
+          visible: siNo(col(o, "visible", "mostrar")) && !(ini && ini > hoy),
+          hasta: fechaCorta(hasta), vencido: fin ? fin < hoy : false,
           imagen: urlImagen(col(o, "imagen", "foto")),
         };
       })

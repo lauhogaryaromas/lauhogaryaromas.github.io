@@ -1,4 +1,4 @@
-Catálogo,Descripción,Visible,Vigente hasta,Imagen
-Catálogo general,Todos nuestros productos para el hogar.,SÍ,,
-Navidad,Combos y regalos para estas fiestas.,SÍ,24/12/2026,
-Día de la Madre,Regalos especiales para mamá.,NO,,
+Catálogo,Descripción,Visible,Vigente desde,Vigente hasta,Imagen
+Catálogo general,Todos nuestros productos para el hogar.,SÍ,,,
+Navidad,Combos y regalos para estas fiestas.,SÍ,1/11/2026,24/12/2026,
+Día de la Madre,Regalos especiales para mamá.,NO,,,

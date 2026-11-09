@@ -23,6 +23,7 @@ Catálogo online publicado en GitHub Pages. Los productos, precios y catálogos 
 | Catálogo | Nombre, ej. `Navidad` |
 | Descripción | Texto corto que aparece en la tarjeta |
 | Visible | `SÍ` para mostrarlo, `NO` para esconderlo |
+| Vigente desde | Opcional, ej. `1/12/2026`. Antes de esa fecha el catálogo no se ve |
 | Vigente hasta | Opcional, ej. `24/12/2026`. Pasada esa fecha aparece como "Finalizado" |
 | Imagen | Opcional, link de una foto |
 

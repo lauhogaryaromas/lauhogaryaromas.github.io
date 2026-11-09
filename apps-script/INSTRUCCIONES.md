@@ -34,7 +34,9 @@ Si aparece un error de "no se puede abrir el archivo", suele ser porque hay **va
 - **Foto:** tocar "Agregar foto" / "Cambiar foto": deja sacar una foto o elegir de la galería, y se guarda al instante.
 - **＋ Nuevo producto:** catálogo, nombre, precio, categoría, descripción y foto.
 
-Los catálogos (Navidad, Día de la Madre…) se siguen creando en la pestaña **Catalogos** de la planilla.
+- **Pestaña Catálogos:** elegir fecha de inicio y de fin de cada catálogo con el calendario, mostrarlo u ocultarlo, y crear catálogos nuevos. Antes de la fecha de inicio el catálogo no se ve; después de la de fin aparece como "Finalizado".
+
+La primera vez que se abre el panel agrega sola la columna "Vigente desde" en la pestaña Catalogos si no existe.
 
 ## Si se cambia el código
 

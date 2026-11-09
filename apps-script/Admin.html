@@ -58,6 +58,19 @@
     .vista { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; background: #efe3d5; }
     .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+    .tabs { display: flex; gap: 4px; background: #ecdfd0; padding: 3px; border-radius: 12px; margin-bottom: 10px; }
+    .tabs button { flex: 1; background: transparent; color: var(--suave); padding: 8px; font-size: .92rem; }
+    .tabs button[aria-selected="true"] { background: #fff; color: var(--texto); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .catc { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+    .catc .cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .estado-cat { font-size: .75rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+    .e-vigente { background: #e5f2ea; color: var(--verde); }
+    .e-prog { background: #e7ecf6; color: #3d5a8a; }
+    .e-fin, .e-oculto { background: #f1e6e2; color: var(--rojo); }
+    .fechas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .fechas label { font-weight: 600; font-size: .8rem; color: var(--suave); }
+    .fechas input { padding: 8px 10px; }
+    .ayuda { font-size: .8rem; color: var(--suave); margin: 0 0 12px; }
     .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--texto); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: .9rem; z-index: 20; max-width: calc(100vw - 32px); }
     .toast.error { background: var(--rojo); }
     .oculto { display: none !important; }
@@ -66,11 +79,19 @@
 <body>
   <header>
     <h1>LAU <span>· Administrar catálogo</span></h1>
-    <div class="barra"><input id="buscar" type="search" placeholder="Buscar producto…"></div>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="prod" aria-selected="true">Productos</button>
+      <button type="button" role="tab" data-tab="cat" aria-selected="false">Catálogos</button>
+    </nav>
+    <div class="barra" id="barra-prod"><input id="buscar" type="search" placeholder="Buscar producto…"></div>
     <div id="chips" class="chips"></div>
   </header>
 
   <main id="lista"><p class="estado">Cargando productos…</p></main>
+  <main id="vista-cat" class="oculto">
+    <p class="ayuda">Antes de la fecha de inicio el catálogo no se ve. Después de la fecha de fin aparece como “Finalizado”. Sin fechas, se ve siempre.</p>
+    <div id="lista-cat"></div>
+  </main>
 
   <button id="nuevo" class="btn nuevo-btn" type="button">＋ Nuevo producto</button>
 
@@ -94,18 +115,39 @@
     </form>
   </dialog>
 
+  <dialog id="dlg-cat">
+    <form id="form-cat" method="dialog">
+      <h2>Nuevo catálogo</h2>
+      <label>Nombre <input name="nombre" required autocomplete="off" placeholder="Ej: Día del Padre"></label>
+      <label>Descripción <textarea name="descripcion" rows="2" placeholder="Texto corto que ven los clientes"></textarea></label>
+      <div class="dos">
+        <label>Desde <input name="desde" type="date"></label>
+        <label>Hasta <input name="hasta" type="date"></label>
+      </div>
+      <div class="fila">
+        <button type="button" class="btn-sec" id="cancelar-cat">Cancelar</button>
+        <button type="submit" class="btn" style="flex:1" id="crear-cat">Crear catálogo</button>
+      </div>
+    </form>
+  </dialog>
+
 <script>
   // Para probar fuera de Google: datos de mentira.
   if (typeof google === "undefined") {
     const demo = {
       catalogos: ["Catálogo general", "Navidad"], categorias: ["Combos", "Velas"],
+      catalogosDetalle: [
+        { fila: 2, nombre: "Catálogo general", descripcion: "", visible: true, desde: "", hasta: "" },
+        { fila: 3, nombre: "Navidad", descripcion: "", visible: true, desde: "1/11/2026", hasta: "24/12/2026" },
+        { fila: 4, nombre: "Día de la Madre", descripcion: "", visible: false, desde: "1/10/2026", hasta: "18/10/2026" },
+      ],
       productos: [
         { fila: 2, catalogo: "Catálogo general", categoria: "Velas", nombre: "Vela de soja 200 g", descripcion: "", precio: "8500", miniatura: "", disponible: true },
         { fila: 3, catalogo: "Navidad", categoria: "Combos", nombre: "Combo Noche Buena", descripcion: "", precio: "19900", miniatura: "", disponible: false },
       ],
     };
     const runner = (ok, err) => new Proxy({}, { get: (_, fn) => fn === "withSuccessHandler" ? (f) => runner(f, err) : fn === "withFailureHandler" ? (f) => runner(ok, f) :
-      (...a) => setTimeout(() => ok && ok(fn === "obtenerDatos" ? demo : fn === "guardarCambios" ? { fila: a[0].fila, miniatura: a[0].foto ? "data:image/jpeg;base64," + a[0].foto.base64 : null } : true), 400) });
+      (...a) => setTimeout(() => ok && ok(fn === "obtenerDatos" ? demo : fn === "guardarCambios" ? { fila: a[0].fila, miniatura: a[0].foto ? "data:image/jpeg;base64," + a[0].foto.base64 : null } : fn === "guardarCatalogo" ? { fila: a[0].fila } : true), 400) });
     window.google = { script: { get run() { return runner(); } } };
   }
 
@@ -152,6 +194,7 @@
       DATOS = await llamar("obtenerDatos");
       dibujarChips();
       dibujar();
+      dibujarCatalogos();
     } catch (e) {
       $("#lista").innerHTML = `<p class="estado">No se pudo cargar: ${esc(e.message)}</p>`;
     }
@@ -264,6 +307,7 @@
   const dlg = $("#dlg"), form = $("#form-nuevo");
   let fotoNueva = null;
   $("#nuevo").addEventListener("click", () => {
+    if (tab === "cat") { formCat.reset(); dlgCat.showModal(); return; }
     form.reset(); fotoNueva = null; $("#vista-nuevo").classList.add("oculto");
     if (filtroCat) form.catalogo.value = filtroCat;
     dlg.showModal();
@@ -288,6 +332,117 @@
       await cargar();
     } catch (err) { aviso(err.message, true); }
     b.disabled = false; b.textContent = "Agregar";
+  });
+
+  // ---------- Pestañas ----------
+  let tab = "prod";
+  document.querySelector(".tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-tab]"); if (!b) return;
+    tab = b.dataset.tab;
+    document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+    const esProd = tab === "prod";
+    $("#lista").classList.toggle("oculto", !esProd);
+    $("#barra-prod").classList.toggle("oculto", !esProd);
+    $("#chips").classList.toggle("oculto", !esProd);
+    $("#vista-cat").classList.toggle("oculto", esProd);
+    $("#nuevo").textContent = esProd ? "＋ Nuevo producto" : "＋ Nuevo catálogo";
+    window.scrollTo(0, 0);
+  });
+
+  // ---------- Catálogos ----------
+  // "24/12/2026" <-> "2026-12-24" (formato del calendario)
+  function aISO(t) {
+    const m = String(t || "").trim().match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+    if (!m) return "";
+    let a = m[3] ? Number(m[3]) : new Date().getFullYear(); if (a < 100) a += 2000;
+    return `${a}-${String(m[2]).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}`;
+  }
+  const fechaDe = (iso, fin) => iso ? new Date(iso + (fin ? "T23:59:59" : "T00:00:00")) : null;
+  const lindo = (iso) => iso ? iso.split("-").reverse().slice(0, 2).map(Number).join("/") : "";
+
+  function estadoCat(visible, desde, hasta) {
+    const hoy = new Date();
+    if (!visible) return ["e-oculto", "Oculto"];
+    if (desde && fechaDe(desde) > hoy) return ["e-prog", "Aparece el " + lindo(desde)];
+    if (hasta && fechaDe(hasta, true) < hoy) return ["e-fin", "Finalizado"];
+    return ["e-vigente", hasta ? "Vigente hasta " + lindo(hasta) : "Vigente"];
+  }
+
+  function dibujarCatalogos() {
+    const cs = DATOS.catalogosDetalle || [];
+    if (!cs.length) { $("#lista-cat").innerHTML = `<p class="estado">No hay catálogos todavía.</p>`; return; }
+    $("#lista-cat").innerHTML = cs.map((c) => {
+      const d = aISO(c.desde), h = aISO(c.hasta);
+      const [cls, txt] = estadoCat(c.visible, d, h);
+      const n = DATOS.productos.filter((p) => p.catalogo === c.nombre).length;
+      return `
+        <article class="catc" data-fila="${c.fila}">
+          <div class="cab">
+            <div><div class="nombre">${esc(c.nombre)}</div><div class="sub">${n} producto${n === 1 ? "" : "s"}</div></div>
+            <span class="estado-cat ${cls}">${esc(txt)}</span>
+          </div>
+          <div class="fechas">
+            <label>Desde<input type="date" class="in-desde" value="${d}"></label>
+            <label>Hasta<input type="date" class="in-hasta" value="${h}"></label>
+          </div>
+          <div class="fila">
+            <div class="stock" role="group" aria-label="Mostrar">
+              <button type="button" class="si ${c.visible ? "on" : ""}" data-v="1">Mostrar</button>
+              <button type="button" class="no ${c.visible ? "" : "on"}" data-v="0">Ocultar</button>
+            </div>
+            <button type="button" class="btn guardar oculto">Guardar</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  const catDe = (el) => (DATOS.catalogosDetalle || []).find((c) => c.fila === Number(el.closest(".catc").dataset.fila));
+  function leerCard(card) {
+    return {
+      desde: $(".in-desde", card).value, hasta: $(".in-hasta", card).value,
+      visible: $(".stock .si", card).classList.contains("on"),
+    };
+  }
+  function cambioCat(card) {
+    const c = catDe(card), v = leerCard(card);
+    const [cls, txt] = estadoCat(v.visible, v.desde, v.hasta);
+    const e = $(".estado-cat", card); e.className = "estado-cat " + cls; e.textContent = txt;
+    $(".guardar", card).classList.toggle("oculto", v.desde === aISO(c.desde) && v.hasta === aISO(c.hasta) && v.visible === c.visible);
+  }
+
+  $("#lista-cat").addEventListener("input", (e) => { if (e.target.type === "date") cambioCat(e.target.closest(".catc")); });
+  $("#lista-cat").addEventListener("click", async (e) => {
+    const card = e.target.closest(".catc"); if (!card) return;
+    const st = e.target.closest(".stock button");
+    if (st) { card.querySelectorAll(".stock button").forEach((b) => b.classList.toggle("on", b === st)); cambioCat(card); return; }
+    const g = e.target.closest(".guardar"); if (!g) return;
+    const c = catDe(card), v = leerCard(card);
+    if (v.desde && v.hasta && v.desde > v.hasta) { aviso("La fecha de inicio es posterior a la de fin.", true); return; }
+    g.disabled = true; g.textContent = "Guardando…";
+    try {
+      const r = await llamar("guardarCatalogo", { fila: c.fila, nombre: c.nombre, desde: v.desde, hasta: v.hasta, visible: v.visible });
+      const deISO = (iso) => iso ? iso.split("-").reverse().map(Number).join("/") : "";
+      Object.assign(c, { fila: r.fila, desde: deISO(v.desde), hasta: deISO(v.hasta), visible: v.visible });
+      card.dataset.fila = r.fila;
+      g.classList.add("oculto");
+      aviso("Guardado ✓");
+    } catch (err) { aviso(err.message, true); }
+    g.disabled = false; g.textContent = "Guardar";
+  });
+
+  const dlgCat = $("#dlg-cat"), formCat = $("#form-cat");
+  $("#cancelar-cat").addEventListener("click", () => dlgCat.close());
+  formCat.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (formCat.desde.value && formCat.hasta.value && formCat.desde.value > formCat.hasta.value) { aviso("La fecha de inicio es posterior a la de fin.", true); return; }
+    const b = $("#crear-cat"); b.disabled = true; b.textContent = "Creando…";
+    try {
+      await llamar("agregarCatalogo", { nombre: formCat.nombre.value, descripcion: formCat.descripcion.value, desde: formCat.desde.value, hasta: formCat.hasta.value });
+      dlgCat.close();
+      aviso("Catálogo creado ✓");
+      await cargar();
+    } catch (err) { aviso(err.message, true); }
+    b.disabled = false; b.textContent = "Crear catálogo";
   });
 
   cargar();
