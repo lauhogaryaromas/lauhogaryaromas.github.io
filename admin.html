@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LAU · Administrar</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#8a6a4f">
+  <link rel="icon" type="image/png" sizes="32x32" href="iconos/icono-32.png">
+  <link rel="apple-touch-icon" href="iconos/icono-180.png">
+  <link rel="manifest" href="admin.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="LAU Admin">
+  <style>
+    :root { --fondo: #f6efe6; --tarjeta: #fffaf4; --texto: #3b2f2a; --suave: #7a6a60; --acento: #8a6a4f; --borde: #e6d9ca; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fondo); color: var(--texto); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: grid; place-items: center; min-height: 100vh; padding: 24px 16px; }
+    .caja { max-width: 420px; width: 100%; text-align: center; }
+    img.logo { width: 112px; height: 112px; border-radius: 24px; box-shadow: 0 4px 16px rgba(80,55,35,.15); margin: 0 auto 16px; display: block; }
+    h1 { font-size: 1.3rem; margin: 0 0 6px; }
+    p { color: var(--suave); margin: 0 0 18px; }
+    .btn { display: block; background: var(--acento); color: #fff; text-decoration: none; font-weight: 700; padding: 14px; border-radius: 12px; }
+    .pasos { text-align: left; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 16px; margin-top: 22px; font-size: .92rem; }
+    .pasos h2 { font-size: .95rem; margin: 0 0 6px; }
+    .pasos ol { margin: 0 0 10px; padding-left: 20px; }
+    .pasos ol:last-child { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div class="caja">
+    <img class="logo" src="iconos/icono-192.png" alt="LAU">
+    <h1>Administrar catálogo</h1>
+    <p id="msg">Cambiá precios, stock y fotos de tus productos.</p>
+    <a id="abrir" class="btn" href="#">Abrir panel</a>
+
+    <div class="pasos" id="pasos">
+      <h2>Tenerlo como app en el celular</h2>
+      <strong>Android (Chrome)</strong>
+      <ol>
+        <li>Tocá los tres puntitos ⋮ arriba a la derecha.</li>
+        <li>Elegí <b>Agregar a la pantalla principal</b> (o <b>Instalar app</b>).</li>
+        <li>Tocá <b>Agregar</b>.</li>
+      </ol>
+      <strong>iPhone (Safari)</strong>
+      <ol>
+        <li>Tocá el botón de compartir (cuadrado con flecha).</li>
+        <li>Elegí <b>Agregar a pantalla de inicio</b>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    const url = (window.CONFIG && window.CONFIG.ADMIN_URL) || "";
+    const abrir = document.getElementById("abrir");
+    if (!url) {
+      abrir.style.display = "none";
+      document.getElementById("msg").textContent = "Todavía no está configurado el link del panel.";
+    } else {
+      abrir.href = url;
+      // Abierto desde el ícono de la pantalla de inicio: ir directo al panel.
+      const desdeIcono = new URLSearchParams(location.search).has("app") ||
+        matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+      if (desdeIcono) {
+        document.getElementById("pasos").style.display = "none";
+        document.getElementById("msg").textContent = "Abriendo…";
+        location.replace(url);
+      }
+    }
+  </script>
+</body>
+</html>

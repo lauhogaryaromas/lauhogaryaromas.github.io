@@ -12,7 +12,8 @@ const NOMBRE_CARPETA = "LAU Catálogo - Fotos";
 function doGet() {
   return HtmlService.createHtmlOutputFromFile("Admin")
     .setTitle("LAU · Administrar catálogo")
-    .addMetaTag("viewport", "width=device-width, initial-scale=1");
+    .addMetaTag("viewport", "width=device-width, initial-scale=1")
+    .setFaviconUrl("https://but0o.github.io/LAU-Hogar-y-Aromas/iconos/icono-32.png");
 }
 
 // ---------- Utilidades ----------
