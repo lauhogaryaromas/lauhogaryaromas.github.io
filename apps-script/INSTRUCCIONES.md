@@ -1,10 +1,10 @@
 # Panel de administración (desde el celular)
 
-Página privada para que LAU cambie precios, marque stock, suba fotos y agregue productos sin tocar la planilla. Todo se guarda en la planilla y las fotos van a una carpeta de su Drive ("LAU Catálogo - Fotos") que se crea sola.
+Página privada para que LAU cambie precios, marque stock, suba fotos y agregue productos sin tocar la planilla. Todo se guarda en la planilla y las fotos van a una carpeta del Drive de quien las sube ("LAU Catálogo - Fotos"), que se crea sola.
 
-## Instalación (una sola vez, desde la compu)
+Solo puede modificar quien sea **Editor** de la planilla. Cualquier otra persona que abra el link no puede cambiar nada.
 
-Hacerlo **con la cuenta de Google de tu mamá**. La planilla tiene que ser suya o estar compartida con ella como **Editor**.
+## Instalación (una sola vez, desde la compu, con tu cuenta)
 
 1. Abrir la planilla → **Extensiones → Apps Script**.
 2. En el archivo `Código.gs` borrar todo y pegar el contenido de [`Codigo.gs`](Codigo.gs).
@@ -12,16 +12,18 @@ Hacerlo **con la cuenta de Google de tu mamá**. La planilla tiene que ser suya 
 4. Guardar (ícono del disquete).
 5. Arriba a la derecha: **Implementar → Nueva implementación**.
    - Engranaje ⚙ → **Aplicación web**.
-   - Ejecutar como: **Yo**.
-   - Quién tiene acceso: **Solo yo**.
+   - Ejecutar como: **Usuario que accede a la aplicación web**.
+   - Quién tiene acceso: **Cualquier persona con una cuenta de Google**.
    - **Implementar**.
-6. Pide autorizar: **Autorizar acceso** → elegir la cuenta → aparece "Google no verificó esta app" → **Configuración avanzada → Ir a … (no seguro)** → **Permitir**. Es normal: la "app" es el propio código de ella.
-7. Copiar la **URL de la aplicación web** (termina en `/exec`).
+6. Copiar la **URL de la aplicación web** (termina en `/exec`).
+7. Abrir esa URL en tu navegador para probar. La primera vez pide permiso: **Revisar permisos** → elegir tu cuenta → "Google no verificó esta app" → **Configuración avanzada → Ir a … (no seguro)** → **Permitir**. Es normal: la "app" es este mismo código.
+8. Compartir la planilla con el mail de tu mamá como **Editor** (botón **Compartir** de la planilla).
 
 ## En el celular de tu mamá
 
-1. Mandarle la URL y abrirla en Chrome (o Safari), con su cuenta de Google iniciada.
-2. Menú ⋮ → **Agregar a la pantalla principal**. Queda como una app más.
+1. Mandarle la URL `/exec` por WhatsApp y abrirla en Chrome con su cuenta de Google.
+2. La primera vez le pide el mismo permiso del paso 7: **Revisar permisos → su cuenta → Configuración avanzada → Ir a … (no seguro) → Permitir**.
+3. Menú ⋮ → **Agregar a la pantalla principal**. Queda como una app más.
 
 Si aparece un error de "no se puede abrir el archivo", suele ser porque hay **varias cuentas de Google** iniciadas en ese navegador. Abrirla en una pestaña de incógnito iniciando sesión solo con su cuenta, o cerrar las otras cuentas.
 

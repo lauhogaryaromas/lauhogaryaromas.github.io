@@ -1,7 +1,8 @@
 /**
  * Panel de administración de LAU Hogar y Aromas.
  * Va pegado en la planilla: Extensiones → Apps Script.
- * Se publica como "Aplicación web" (Ejecutar como: Yo · Acceso: Solo yo).
+ * Se publica como "Aplicación web" (Ejecutar como: Usuario que accede · Acceso: Cualquier persona con cuenta de Google).
+ * Solo puede modificar quien sea Editor de la planilla. Cada usuario guarda las fotos en una carpeta de su propio Drive.
  */
 
 const HOJA_PRODUCTOS = "Productos";
@@ -57,7 +58,7 @@ function miniatura_(url) {
 }
 
 function carpeta_() {
-  const props = PropertiesService.getScriptProperties();
+  const props = PropertiesService.getUserProperties();
   const id = props.getProperty("CARPETA_FOTOS");
   if (id) {
     try {
